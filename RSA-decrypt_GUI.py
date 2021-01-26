@@ -1,10 +1,5 @@
 # coding: utf-8
 
-
-################
-# interface GUI#
-################
-
 from tkinter import *
 import pyasn1.codec.der.encoder
 import pyasn1.type.univ
@@ -46,10 +41,6 @@ Q = Entry(GUI)
 Q.pack()
 
 
-##################################
-# traitement des infos et calcule#
-##################################
-
 def traitement():
 
 
@@ -59,40 +50,39 @@ def traitement():
 	p = int(P.get())
 
 
-	phi = (p -1)*(q-1) # affecte à phi la fonction Indicatrice d'Euler (arithmétique)
+	phi = (p -1)*(q-1)
 
-	def egcd(a, b): # définir la fonction egcd avec a et b en tant que paramètre de la fonction
-    		if a == 0: # si le premier argument est égal à 0
-        		return (b, 0, 1) # alors afficher le deuxième argument, 0 et 1
-    		else: # sinon
-        		g, y, x = egcd(b % a, a) # g, y, x = deuxième argument modulo deuxième argument et deuxième argument
-        		return (g, x - (b // a) * y, y) # afficher (dans la fonction) g, x moins (b strictement divisé par le premier argument) fois y, y
+	def egcd(a, b):
+    		if a == 0:
+        		return (b, 0, 1)
+    		else:
+        		g, y, x = egcd(b % a, a)
+        		return (g, x - (b // a) * y, y)
+		
+	def modinv(a, m):
+    		gcd, x, y = egcd(a, m)
+    		if gcd != 1:
+        		return None
+    		else:
+        		return x % m
 
-	def modinv(a, m): # définir la fonction modinv pour calculer l'inverse multiplicatif modulaire avec comme premier argument a et deuxième argument m
-    		gcd, x, y = egcd(a, m) # gcd, x et y sont égaux à la focntion egcd avec comme premier argument a et deuxième argument m
-    		if gcd != 1: # si gcd n'est pas égal à 1
-        		return None # rien afficher
-    		else: # sinon
-        		return x % m # afficher x modulo m
-
-	d = modinv(e,phi) # affecter à d modinv avec comme premier argument e soit 0x010001 dans l'exemple et comme deuxième argument phi soit (p -1)*(q-1)
-	dp = modinv(e,(p-1)) # affecter à dp modinv comme premier argument e, (le nombre premier p - 1)
-	dq = modinv(e,(q-1)) # affecter à dq modinv comme premier argument e, (le nombre premier q - 1)
-	qi = modinv(q,p) # affecter à qi modinv comme premier argument q et deuxième argument p
-
-
-	def pempriv(n, e, d, p, q, dP, dQ, qInv): # définir à pempriv les arguments : 1:modulo, 2:exponent, 3 et 4: les deux nombres premiers, 5:e, (le nombre premier q - 1), 6:e, (le nombre premier q - 1), 7:q,p
-    		template = '-----BEGIN RSA PRIVATE KEY-----\n{}-----END RSA PRIVATE KEY-----\n' # affecter à template le début et la fin de la clé
-    		seq = pyasn1.type.univ.Sequence() # affecter à seq une séquence pour générer la clé
-    		for i,x in enumerate((0, n, e, d, p, q, dP, dQ, qInv)): # pour i et x en énumérant (0 ; modulo ; exponent ; exponent,(p -1)*(q-1) ; les nombres premiers ; (e,(p-1) ; (e,(q-1) ; q,p)
-        		seq.setComponentByPosition(i, pyasn1.type.univ.Integer(x)) # encoder en type entier (integer)
-    		der = pyasn1.codec.der.encoder.encode(seq) # affecter à der seq mais encodé
-    		return template.format(base64.encodestring(der).decode('ascii')) # encoder en ascii der
+	d = modinv(e,phi)
+	dp = modinv(e,(p-1))
+	dq = modinv(e,(q-1))
+	qi = modinv(q,p)
 
 
+	def pempriv(n, e, d, p, q, dP, dQ, qInv):
+    		template = '-----BEGIN RSA PRIVATE KEY-----\n{}-----END RSA PRIVATE KEY-----\n'
+    		seq = pyasn1.type.univ.Sequence()
+    		for i,x in enumerate((0, n, e, d, p, q, dP, dQ, qInv)):
+        		seq.setComponentByPosition(i, pyasn1.type.univ.Integer(x))
+    		der = pyasn1.codec.der.encoder.encode(seq)
+    		return template.format(base64.encodestring(der).decode('ascii'))
 
 
-	key = pempriv(n,e,d,p,q,dp,dq,qi) # affecter à key la fonction pempriv avec tout les paramètres
+
+	key = pempriv(n,e,d,p,q,dp,dq,qi)
 	decrypted.insert(0, key)
 
 decrypt = Radiobutton(GUI ,text="Crack RSA !",command = traitement)
